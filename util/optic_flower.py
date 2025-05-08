@@ -2,7 +2,7 @@ import cv2
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from segmentation_sizer import get_maps
+from util.segmentation_sizer import get_maps
 
 step = 10  # Point spacing in mask
 time_sampler = 5
@@ -32,6 +32,9 @@ def get_flow(video, segment_masks):
 
     cap.release()
 
+    vec_field_list = []
+    point_list = []
+
     for i in range(0, len(downsampled) - 1):
         frame1 = downsampled[i]
         frame2 = downsampled[i + 1]
@@ -42,7 +45,7 @@ def get_flow(video, segment_masks):
         # Berechne den Optical Flow
         next_points, status, err = cv2.calcOpticalFlowPyrLK(
             frame1, frame2, points, None,
-            winSize=(15, 15),
+            winSize=(20, 20),
             maxLevel=4,
             criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 100, 0.000001)
         )
@@ -56,35 +59,22 @@ def get_flow(video, segment_masks):
         # magnitude of vectors
         mag = np.linalg.norm(vector_field, axis=1)
 
-        if i == 10:
-            # histogram of magnitudes
-            plt.hist(mag, bins=20)
-            plt.show()
+        # robust z score the mags
+        med = np.median(mag)
+        mad = np.median(np.abs(mag - med))
+        mag = (mag - med) / (mad + 1e-6)
 
-            plt.plot(points[:, 0], points[:, 1], 'ro', markersize=2)
-            plt.plot(next_points[:, 0], next_points[:, 1], 'go', markersize=2)
-            plt.imshow(frame1)
-            plt.axis('off')
-            plt.show()
+        # where mag > 4 make a mask
+        mask = mag > 4
 
-            # plot segment map
-            plt.imshow(down_segment[i])
-            plt.show()
-            # visualize the vector field
-            for j in range(len(points)):
-                x, y = points[j]
-                dx, dy = vector_field[j]
-                plt.arrow(x, y, dx, dy, color='r', head_width=2, head_length=1)
-            plt.xlim(0, frame2.shape[1])
-            plt.ylim(frame2.shape[0], 0)
-            plt.imshow(frame2)
-            plt.axis('off')
-            plt.show()
-            # plot 2nd frame
-            plt.imshow(frame1)
-            plt.axis('off')
-            plt.show()
-            raise SystemExit("Stop after first frame")
+        # to nan where mask
+        vector_field[mask] = np.nan
+
+        # lazy save for later pckling
+        vec_field_list.append(vector_field)
+        point_list.append(points)
+
+    return vec_field_list, point_list
 
 
 
@@ -93,4 +83,4 @@ if __name__ == "__main__":
 
     masks, _, _ = get_maps(video)
 
-    get_flow(video, masks)
+    v_list, p_list = get_flow(video, masks)
