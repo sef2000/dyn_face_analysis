@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 model_path = r'C:\Users\sebif\Desktop\Psychologie\HiWi_Dobs\hilal\face_analysis\models\selfie_multiclass_256x256.tflite'
-
 BaseOptions = mp.tasks.BaseOptions
 ImageSegmenter = mp.tasks.vision.ImageSegmenter
 ImageSegmenterOptions = mp.tasks.vision.ImageSegmenterOptions
