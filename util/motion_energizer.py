@@ -6,6 +6,7 @@ pymoten: scientific python package for computing motion energy features from vid
 import moten
 import cv2
 import matplotlib.pyplot as plt
+import pandas as pd
 
 def get_energy(video):
     # get frame number of video
@@ -23,12 +24,9 @@ def get_energy(video):
     # compute motion energy
     moten_features = filter_pyramid.project_stimulus(luminance_images)
 
-    """animation = filter_pyramid.show_filter(100)
-    # show animation
-    animation.save('filter.gif')
-    print(filter_pyramid.filters[100])"""
+    filter_specs = pd.DataFrame.from_records(filter_pyramid.filters)
 
-    return moten_features
+    return moten_features, filter_specs
 
 if __name__ == "__main__":
     video = r'C:\Users\sebif\Desktop\Psychologie\HiWi_Dobs\hilal\face_analysis\data\Copy of Trimmed_videos_partial_editted\Trimmed_videos_partial_editted\juhm\agree_pure\juhm_agree_pure.avi'
